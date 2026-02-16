@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamVault — Free Live TV Channels</title>
+  <meta name="description"
+    content="Watch 12,000+ live TV channels from 178 countries for free. Stream news, sports, entertainment and more directly in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="header-left">
+      <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+      <div class="logo">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="url(#logoGrad)" stroke-width="2">
+            <defs>
+              <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#00d4ff" />
+                <stop offset="100%" stop-color="#7b2ff7" />
+              </linearGradient>
+            </defs>
+            <polygon points="5 3 19 12 5 21 5 3" />
+          </svg>
+        </div>
+        <span class="logo-text">Stream<span class="logo-accent">Vault</span></span>
+      </div>
+    </div>
+    <div class="search-wrap" id="searchWrap">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2">
+        <circle cx="11" cy="11" r="8" />
+        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+      </svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search 12,000+ channels..."
+        autocomplete="off">
+      <button class="search-clear" id="searchClear" aria-label="Clear search">✕</button>
+    </div>
+    <div class="header-right">
+      <button class="fav-header-btn" id="favHeaderBtn" aria-label="Show favorites">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+        </svg>
+        <span class="fav-badge" id="favBadge">0</span>
+      </button>
+      <div class="stats" id="stats"></div>
+    </div>
+  </header>
+
+  <!-- Layout -->
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h3>Browse</h3>
+        <button class="sidebar-btn active" id="btnAll" data-country="all">All</button>
+      </div>
+      <div class="fav-sidebar-section" id="favSidebarSection">
+        <div class="country-item fav-sidebar-item" id="btnFavorites" role="button" tabindex="0">
+          <div class="country-info">
+            <span class="country-flag">❤️</span>
+            <span class="country-name">My Favorites</span>
+          </div>
+          <span class="country-count fav-count" id="favSidebarCount">0</span>
+        </div>
+      </div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-sub-header">
+        <h4>Countries</h4>
+      </div>
+      <div class="country-list" id="countryList"></div>
+    </aside>
+
+    <!-- Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Main Content -->
+    <main class="main" id="main">
+      <div class="main-header" id="mainHeader">
+        <h2 id="currentView">All Channels</h2>
+        <span class="channel-count" id="channelCount"></span>
+      </div>
+      <div class="channel-grid" id="channelGrid"></div>
+      <div class="no-results" id="noResults" style="display:none;">
+        <div class="no-results-icon">📡</div>
+        <h3>No channels found</h3>
+        <p>Try a different search term or country filter</p>
+      </div>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Loading channels...</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Video Player Modal -->
+  <div class="player-modal" id="playerModal">
+    <div class="player-backdrop" id="playerBackdrop"></div>
+    <div class="player-container">
+      <div class="player-header">
+        <div class="player-info">
+          <span class="player-country" id="playerCountry"></span>
+          <h3 class="player-title" id="playerTitle"></h3>
+        </div>
+        <div class="player-actions">
+          <button class="player-fav-btn" id="playerFavBtn" aria-label="Toggle favorite">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </button>
+          <button class="player-close" id="playerClose" aria-label="Close player">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="player-video-wrap">
+        <video id="videoPlayer" controls autoplay></video>
+        <div class="player-error" id="playerError" style="display:none;">
+          <div class="error-icon">⚠️</div>
+          <h4>Stream Unavailable</h4>
+          <p>This channel may be offline or geo-restricted. Try another stream.</p>
+        </div>
+        <div class="player-loading" id="playerLoading">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>
