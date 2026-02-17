@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Polimer News - Live</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: Arial, sans-serif
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000
+        }
+
+        #msg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 28px;
+            text-align: center;
+            z-index: 10
+        }
+
+        #bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 24px;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, .8), transparent);
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            transition: opacity .3s
+        }
+
+        #bar:hover,
+        #bar.show {
+            opacity: 1
+        }
+
+        #dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e53935;
+            animation: pulse 2s infinite
+        }
+
+        #title {
+            color: #fff;
+            font-size: 20px;
+            font-weight: bold
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .4
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="bar" class="show"><span id="dot"></span><span id="title">Polimer News — Live</span></div>
+    <div id="msg">Loading Polimer News...</div>
+    <video id="v" autoplay playsinline muted></video>
+    <script>
+        // Polimer News stream — direct HTTPS HLS, no proxy needed
+        var STREAM = 'https://live-cf-polimernews.dailyhunt.in/master.m3u8';
+        var v = document.getElementById('v');
+        var msg = document.getElementById('msg');
+        var bar = document.getElementById('bar');
+        var started = false;
+
+        function hideMsg() { msg.style.display = 'none'; }
+        function showError(t) { msg.style.display = 'block'; msg.textContent = t || 'Stream unavailable. Retrying...'; }
+
+        // Try native HLS first (Smart TVs, Safari, iOS)
+        if (v.canPlayType('application/vnd.apple.mpegurl') || v.canPlayType('application/x-mpegURL')) {
+            v.src = STREAM;
+            v.addEventListener('loadedmetadata', function () {
+                hideMsg();
+                started = true;
+                v.play();
+                v.muted = false;
+            });
+            v.addEventListener('error', function () {
+                if (!started) showError('Stream failed. Retrying in 5s...');
+                setTimeout(function () { v.src = STREAM; v.load(); v.play(); }, 5000);
+            });
+        } else {
+            // Load HLS.js for browsers that don't support native HLS
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js';
+            s.onload = function () {
+                if (!Hls.isSupported()) { showError('This browser cannot play live streams.'); return; }
+                var hls = new Hls({ maxBufferLength: 10, maxMaxBufferLength: 30, enableWorker: false });
+                hls.loadSource(STREAM);
+                hls.attachMedia(v);
+                hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                    hideMsg();
+                    started = true;
+                    v.play();
+                    v.muted = false;
+                });
+                hls.on(Hls.Events.ERROR, function (_, data) {
+                    if (data.fatal) {
+                        showError('Stream error. Retrying in 5s...');
+                        setTimeout(function () { hls.loadSource(STREAM); hls.startLoad(); }, 5000);
+                    }
+                });
+            };
+            document.head.appendChild(s);
+        }
+
+        // Auto-retry if stalled
+        v.addEventListener('stalled', function () {
+            setTimeout(function () { if (v.paused) { v.load(); v.play(); } }, 3000);
+        });
+        v.addEventListener('waiting', function () {
+            if (started) msg.style.display = 'none';
+        });
+
+        // Hide top bar after 4 seconds
+        setTimeout(function () { bar.classList.remove('show'); }, 4000);
+
+        // Unmute on first user interaction (required by some browsers/TVs)
+        document.addEventListener('click', function () { v.muted = false; v.play(); }, { once: true });
+        document.addEventListener('keydown', function () { v.muted = false; v.play(); }, { once: true });
+    </script>
+</body>
+
+</html>
