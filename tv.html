@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Polimer News - Live</title>
+    <title>Polimer TV - Live</title>
     <style>
         * {
             margin: 0;
@@ -88,32 +88,58 @@
 </head>
 
 <body>
-    <div id="bar" class="show"><span id="dot"></span><span id="title">Polimer News — Live</span></div>
-    <div id="msg">Loading Polimer News...</div>
+    <div id="bar" class="show"><span id="dot"></span><span id="title">Polimer TV — Live</span></div>
+    <div id="msg">Loading Polimer TV...</div>
     <video id="v" autoplay playsinline muted></video>
     <script>
-        // Polimer News stream — direct HTTPS HLS, no proxy needed
-        var STREAM = 'https://segment.yuppcdn.net/110322/polimernews/playlist.m3u8';
+        // Polimer TV stream — use the working HLS feed from the channel list
+        var STREAM = 'https://cdn-2.pishow.tv/live/1241/master.m3u8';
         var v = document.getElementById('v');
         var msg = document.getElementById('msg');
         var bar = document.getElementById('bar');
         var started = false;
+        var retryTimer = null;
+        var retryCount = 0;
 
         function hideMsg() { msg.style.display = 'none'; }
         function showError(t) { msg.style.display = 'block'; msg.textContent = t || 'Stream unavailable. Retrying...'; }
+        function clearRetry() {
+            if (retryTimer) {
+                clearTimeout(retryTimer);
+                retryTimer = null;
+            }
+        }
+        function scheduleRetry(resetSource) {
+            clearRetry();
+            retryCount += 1;
+            var delay = Math.min(15000, 2000 + (retryCount * 1000));
+            retryTimer = setTimeout(function () {
+                if (resetSource) {
+                    v.src = STREAM;
+                    v.load();
+                }
+                v.play().catch(function () { });
+            }, delay);
+        }
+        function markReady() {
+            hideMsg();
+            started = true;
+            retryCount = 0;
+            v.play().catch(function () { });
+        }
 
         // Try native HLS first (Smart TVs, Safari, iOS)
         if (v.canPlayType('application/vnd.apple.mpegurl') || v.canPlayType('application/x-mpegURL')) {
             v.src = STREAM;
             v.addEventListener('loadedmetadata', function () {
-                hideMsg();
-                started = true;
-                v.play();
-                v.muted = false;
+                markReady();
+            });
+            v.addEventListener('canplay', function () {
+                if (!started) markReady();
             });
             v.addEventListener('error', function () {
-                if (!started) showError('Stream failed. Retrying in 5s...');
-                setTimeout(function () { v.src = STREAM; v.load(); v.play(); }, 5000);
+                showError('Stream failed. Retrying...');
+                scheduleRetry(true);
             });
         } else {
             // Load HLS.js for browsers that don't support native HLS
@@ -125,15 +151,13 @@
                 hls.loadSource(STREAM);
                 hls.attachMedia(v);
                 hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                    hideMsg();
-                    started = true;
-                    v.play();
-                    v.muted = false;
+                    markReady();
                 });
                 hls.on(Hls.Events.ERROR, function (_, data) {
                     if (data.fatal) {
-                        showError('Stream error. Retrying in 5s...');
-                        setTimeout(function () { hls.loadSource(STREAM); hls.startLoad(); }, 5000);
+                        showError('Stream error. Retrying...');
+                        scheduleRetry(false);
+                        hls.destroy();
                     }
                 });
             };
@@ -142,7 +166,8 @@
 
         // Auto-retry if stalled
         v.addEventListener('stalled', function () {
-            setTimeout(function () { if (v.paused) { v.load(); v.play(); } }, 3000);
+            showError('Stream stalled. Recovering...');
+            scheduleRetry(true);
         });
         v.addEventListener('waiting', function () {
             if (started) msg.style.display = 'none';
@@ -151,9 +176,9 @@
         // Hide top bar after 4 seconds
         setTimeout(function () { bar.classList.remove('show'); }, 4000);
 
-        // Unmute on first user interaction (required by some browsers/TVs)
-        document.addEventListener('click', function () { v.muted = false; v.play(); }, { once: true });
-        document.addEventListener('keydown', function () { v.muted = false; v.play(); }, { once: true });
+        // Keep autoplay muted; let the viewer unmute manually if their device requires it.
+        document.addEventListener('click', function () { v.play().catch(function () { }); }, { once: true });
+        document.addEventListener('keydown', function () { v.play().catch(function () { }); }, { once: true });
     </script>
 </body>
 
