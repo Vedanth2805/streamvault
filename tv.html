@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Polimer TV - Live</title>
+    <title>Polimer News - Live</title>
     <style>
         * {
             margin: 0;
@@ -88,12 +88,12 @@
 </head>
 
 <body>
-    <div id="bar" class="show"><span id="dot"></span><span id="title">Polimer TV — Live</span></div>
-    <div id="msg">Loading Polimer TV...</div>
+    <div id="bar" class="show"><span id="dot"></span><span id="title">Polimer News — Live</span></div>
+    <div id="msg">Loading Polimer News...</div>
     <video id="v" autoplay playsinline muted></video>
     <script>
-        // Polimer TV stream — use the working HLS feed from the channel list
-        var STREAM = 'https://cdn-2.pishow.tv/live/1241/master.m3u8';
+        // Polimer News stream
+        var STREAM = 'https://cdn-3.pishow.tv/live/1245/master.m3u8';
         var v = document.getElementById('v');
         var msg = document.getElementById('msg');
         var bar = document.getElementById('bar');
@@ -164,11 +164,9 @@
             document.head.appendChild(s);
         }
 
-        // Auto-retry if stalled
-        v.addEventListener('stalled', function () {
-            showError('Stream stalled. Recovering...');
-            scheduleRetry(true);
-        });
+        // Removed aggressive auto-retry on stalled event
+        // as it causes frequent disruptive reloads.
+        // HLS.js and native players will handle buffering automatically.
         v.addEventListener('waiting', function () {
             if (started) msg.style.display = 'none';
         });
